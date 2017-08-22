@@ -7,12 +7,28 @@ import android.os.Bundle
 import android.preference.PreferenceManager
 import android.support.v7.app.AppCompatActivity
 import kotlinx.android.synthetic.main.activity_main.*
-import org.osmdroid.bonuspack.routing.OSRMRoadManager
+import org.osmdroid.bonuspack.kml.KmlDocument
+import org.osmdroid.bonuspack.routing.MapQuestRoadManager
+import org.osmdroid.bonuspack.routing.Road
 import org.osmdroid.bonuspack.routing.RoadManager
 import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
+import org.osmdroid.util.BoundingBoxE6
 import org.osmdroid.util.GeoPoint
+import org.osmdroid.views.overlay.FolderOverlay
 import org.osmdroid.views.overlay.Marker
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 class MainActivity : AppCompatActivity() {
@@ -38,7 +54,7 @@ class MainActivity : AppCompatActivity() {
         if(currentLocation!=null)
             location=GeoPoint(currentLocation.getLastKnownLocation(this)!!.latitude,currentLocation.getLastKnownLocation(this)!!.longitude)
         else
-            location = GeoPoint(33.729388, 73.093146)
+            location = GeoPoint(0.0,0.0)
 
 
 
@@ -56,8 +72,10 @@ class MainActivity : AppCompatActivity() {
 
 
 
-        SomeTask(this).execute();
+        SomeTask(this,location).execute();
+
         map.invalidate();
+
 
 
     }
@@ -65,15 +83,17 @@ class MainActivity : AppCompatActivity() {
 
 
 
-    inner class SomeTask(val cont: Context) : AsyncTask<Void, Void, String>() {
+    inner class SomeTask(val cont: Context,val geoPoint:GeoPoint) : AsyncTask<Void, Void, String>() {
+
         override fun doInBackground(vararg params: Void?): String? {
+
 
 
             val endPoint = GeoPoint(33.729388, 73.093146)
             val startPoint = GeoPoint(33.69657, 72.97735)
 
-             routFromStartToEndPoin(startPoint,endPoint);
-
+            routFromStartToEndPoin(geoPoint,endPoint);
+           // kmlLoad()
             return null;
         }
 
@@ -89,7 +109,10 @@ class MainActivity : AppCompatActivity() {
 
         public fun routFromStartToEndPoin(startPoint: GeoPoint, endPoint: GeoPoint) {
 
-            val roadManager = OSRMRoadManager(cont)
+           // val roadManager = OSRMRoadManager(cont)
+
+            val roadManager = MapQuestRoadManager("T8T3EM9KDQzzwTe61zjPuuOEwSS1QkV6")
+            roadManager.addRequestOption("routeType=bicycle")
             val waypoints = ArrayList<GeoPoint>()
             waypoints.add(startPoint)
             waypoints.add(endPoint)
@@ -101,15 +124,30 @@ class MainActivity : AppCompatActivity() {
             map.getOverlays().add(roadOverlay);
 
             val nodeIcon = resources.getDrawable(R.drawable.marker_node)
+
             for (i in 0..road.mNodes.lastIndex - 1) {
-                val node = road.mNodes[i]
+                 val node = road.mNodes[i]
                 val nodeMarker = Marker(map)
                 nodeMarker.position = node.mLocation
                 nodeMarker.setIcon(nodeIcon)
                 nodeMarker.title = "Step " + i
                 map.overlays.add(nodeMarker)
+                nodeMarker.setSnippet(node.mInstructions);
+                nodeMarker.setSubDescription(Road.getLengthDurationText(cont, node.mLength, node.mDuration));
+                val icon = resources.getDrawable(R.drawable.marker_friend_on)
+                nodeMarker.setImage(icon)
             }
-        }
 
+
+        }
+        public fun kmlLoad(){
+            val kmlDocument = KmlDocument()
+            kmlDocument.parseKMLUrl("http://mapsengine.google.com/map/kml?forcekml=1&mid=z6IJfj90QEd4.kUUY9FoHFRdE")
+            val kmlOverlay = kmlDocument.mKmlRoot.buildOverlay(map, null, null, kmlDocument) as FolderOverlay
+            map.getOverlays().add(kmlOverlay);
+            val  bb: BoundingBoxE6 = kmlDocument.mKmlRoot.getBoundingBox() as BoundingBoxE6
+            map.zoomToBoundingBox(bb);
+
+        }
     }
 }
