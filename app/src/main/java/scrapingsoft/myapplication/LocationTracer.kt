@@ -13,7 +13,7 @@ import android.os.Bundle
 class LocationTracer : LocationListener {
     private var locationManager: LocationManager? = null
 
-    fun getLastKnownLocation(context: Context): Location? {
+    fun  getLastKnownLocation(context: Context): Location {
         locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
         var location: Location = locationManager!!.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
         if (location == null) {
