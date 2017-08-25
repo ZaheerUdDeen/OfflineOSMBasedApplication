@@ -4,9 +4,11 @@ package scrapingsoft.myapplication
 import android.os.Bundle
 import android.preference.PreferenceManager
 import android.support.v7.app.AppCompatActivity
+import android.view.View
 import android.widget.Toast
 import kotlinx.android.synthetic.main.activity_main.*
 import org.osmdroid.config.Configuration
+import org.osmdroid.tileprovider.MapTile
 import org.osmdroid.tileprovider.cachemanager.CacheManager
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.BoundingBox
@@ -52,10 +54,14 @@ class MainActivity : AppCompatActivity() {
 
         var bb=BoundingBox(location.latitude,location.longitude,location.latitude,location.longitude)
         val cm= CacheManager(map)
-
-        cm.downloadAreaAsync(this,bb,map.minZoomLevel,map.maxZoomLevel)
+        val mt=MapTile(map.zoomLevel,map.scrollX,map.scrollY)
+        if(cm.checkTile(mt)!=true)
+            cm.downloadAreaAsync(this,bb,map.minZoomLevel,map.maxZoomLevel)
         map.invalidate()
-
-
+        fab.setOnClickListener(View.OnClickListener {
+            val pid = android.os.Process.myPid();
+            android.os.Process.killProcess(pid);
+            System.exit(0)
+        })
     }
 }
